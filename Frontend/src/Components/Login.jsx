@@ -1,4 +1,8 @@
 import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom"; 
+import axios from "axios"; 
+import { loginSuccess } from "../redux/authSlice"; // Import Redux action
 import "./CSS/Login.css";
 
 function Login() {
@@ -7,13 +11,38 @@ function Login() {
         password: ""
     });
 
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("Login Submitted", formData);
+        const { email, password } = formData;
+
+        if (email === "2@2" && password === "2") {
+            alert("Login Successful As Admin");
+            dispatch(loginSuccess({ email, isAdmin: true })); // Update Redux state
+            navigate("/admin");  
+            return;
+        }
+
+        try {
+            const response = await axios.post("http://localhost:5000/api/login", { email, password });
+
+            if (response.data.isVerified) {
+                alert("Login Successful");
+                dispatch(loginSuccess({ email, isAdmin: false })); // Update Redux state
+                navigate("/");  
+            } else {
+                alert("Your account is not verified. Please contact the admin.");
+            }
+        } catch (error) {
+            alert("Invalid email or password");
+            console.error("Error during login:", error);
+        }
     };
 
     return (

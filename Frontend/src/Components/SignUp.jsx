@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import "./CSS/SignUp.css";
+import { useNavigate } from "react-router-dom";
 
 function SignUp() {
     const [formData, setFormData] = useState({
@@ -10,7 +11,7 @@ function SignUp() {
         phone: "",
         confirmPassword: ""
     });
-
+    const navigate = useNavigate();
     const [error, setError] = useState("");
 
     const handleChange = (e) => {
@@ -29,14 +30,13 @@ function SignUp() {
             const response = await axios.post("http://localhost:5000/api/signup", formData);
 
             
-            if (response.data.message === "Admin login successful") {
-                // Redirect to admin dashboard if admin login
-                window.location.href = "/admin-dashboard";
-            } else if (response.data.message === "Email is already registered") {
+         if (response.data.message === "Email is already registered") {
                 alert("request sent for verification");
+                navigate("/");
             }
             else{
                 alert("request sent for verification");
+                navigate("/");
             }
 
         } catch (err) {

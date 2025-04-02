@@ -2,43 +2,9 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
 
-// Signup route (existing code)
 router.post("/signup", async (req, res) => {
-<<<<<<< HEAD
     console.log(req.body);
     const { name, email, phone, password, confirmPassword, isAdmin, isVerified } = req.body;
-=======
-    console.log(req.body); 
-    const { name, email, phone, password, confirmPassword } = req.body;
-  
-    
-    if (password !== confirmPassword) {
-      return res.status(400).json({ message: "Passwords do not match" });
-    }
-  
-    try {
-      
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        return res.status(200).json({ message: "Email is already registered" });
-      }
-  
-    
-      const newUser = new User({ name, email, phone, password, confirmPassword ,isVerified: false});
-  
-      
-      await newUser.save();
-  
-     
-      return res.status(201).json({ message: "User created successfully, awaiting admin approval" });
-  
-    } catch (err) {
-      console.error("Error during signup:", err); 
-      return res.status(500).json({ message: "Error signing up user", error: err });
-    }
-  });
-  
->>>>>>> 2716b2b3f7cfe92cd98669dd31dd03f753425241
 
     if (password !== confirmPassword) {
         return res.status(400).json({ message: "Passwords do not match" });
@@ -61,34 +27,59 @@ router.post("/signup", async (req, res) => {
     }
 });
 
-// Route to fetch unverified users
-router.get("/unverified-users", async (req, res) => {
+
+router.get("/unverified", async (req, res) => {
     try {
+        
         const unverifiedUsers = await User.find({ isVerified: false });
         return res.status(200).json(unverifiedUsers);
     } catch (err) {
-        console.error("Error fetching unverified users:", err);
         return res.status(500).json({ message: "Error fetching unverified users", error: err });
     }
 });
 
-// Route to verify a user
-router.patch("/verify-user/:id", async (req, res) => {
-    const { id } = req.params;
 
+router.post("/accept/:id", async (req, res) => {
     try {
-        const user = await User.findById(id);
-        if (!user) {
+        const userId = req.params.id;
+       
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { isVerified: true },
+            { new: true }  
+        );
+
+        if (!updatedUser) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        user.isVerified = true;
-        await user.save();
-
-        return res.status(200).json({ message: "User verified successfully" });
+        return res.status(200).json({ message: "User verified successfully", user: updatedUser });
     } catch (err) {
-        console.error("Error verifying user:", err);
         return res.status(500).json({ message: "Error verifying user", error: err });
+    }
+});
+
+
+router.post("/login", async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        const user = await User.findOne({ email });
+        if (!user || user.password !== password) { 
+            return res.status(400).json({ message: "Invalid email or password" });
+        }
+
+        
+        if (!user.isVerified) {
+            return res.status(400).json({ message: "Your account is not verified. Please contact the admin." });
+        }
+
+       
+        res.status(200).json({ isVerified: user.isVerified });
+
+    } catch (error) {
+        console.error("Error during login:", error);
+        res.status(500).json({ message: "Internal Server Error" });
     }
 });
 
